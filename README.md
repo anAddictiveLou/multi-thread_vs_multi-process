@@ -7,6 +7,7 @@ You can specific how many threads and process can be used for calculation.
  time ./multi_thread [bg] [end] [number_of_thread]
 # process
  time ./multi_process [bg] [end] [number_of_process]
-
 # Note
  time command for tracing time executing of program
+# Issue 
+ multi process can not add up total primes of each process in the final stage
