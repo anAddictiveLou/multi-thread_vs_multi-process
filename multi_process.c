@@ -51,20 +51,22 @@ int main(int argc, char** argv) {
     }
     else
     {
-        struct Prime total_prime = {.bg = atoi(argv[1]), .end = atoi(argv[2]), .count = 0};
-        int num_of_processes = atoi(argv[3]);
-        int range = total_prime.end - total_prime.bg + 1;
-        int interval = range / num_of_processes;
-        int last_interval = range % num_of_processes;
-        int* process_id = (int*) calloc(num_of_processes, sizeof(int));  
-    
         /* Set up shared mem */
         char* name = "shared mem";
         int shm_fd = shm_open(name, O_CREAT | O_RDWR, 0666);
-        int size_sharing = sizeof(struct Prime) * num_of_processes;
+        int num_of_processes = atoi(argv[3]);
+        int total_prime = num_of_processes;
+        int size_sharing = sizeof(struct Prime) * num_of_processes + 1;
         ftruncate(shm_fd, size_sharing);
         struct Prime* process_prime = (struct Prime*) mmap(0, size_sharing, PROT_WRITE | PROT_READ, MAP_SHARED, shm_fd, 0);
+        memset(process_prime, 0, size_sharing);
 
+        process_prime[total_prime].bg = atoi(argv[1]);
+        process_prime[total_prime].end = atoi(argv[2]);
+        int range = process_prime[total_prime].end - process_prime[total_prime].bg + 1;
+        int interval = range / num_of_processes;
+        int last_interval = range % num_of_processes;
+    
         int success_fork = 0;
         for (int i = 0; i < num_of_processes; i++)
         {
@@ -78,12 +80,12 @@ int main(int argc, char** argv) {
                     if (i == num_of_processes - 1 && 0 != last_interval)
                     {
                         process_prime[i].bg = process_prime[i-1].end + 1;
-                        process_prime[i].end = total_prime.end;
+                        process_prime[i].end = process_prime[total_prime].end;
                     }
                     else 
                     {
-                        process_prime[i].bg = ((0 == i) ? total_prime.bg : process_prime[i-1].end+1);
-                        process_prime[i].end = total_prime.bg + (i + 1) * interval - 1;
+                        process_prime[i].bg = ((0 == i) ? process_prime[total_prime].bg : process_prime[i-1].end+1);
+                        process_prime[i].end = process_prime[total_prime].bg + (i + 1) * interval - 1;
                     }      
                     count_prime((void*)&process_prime[i]);
                     exit(EXIT_SUCCESS);
@@ -94,9 +96,10 @@ int main(int argc, char** argv) {
         for (int i = 0; i < success_fork; i++)
         {
             wait(NULL);
-            total_prime.count+=process_prime[i].count;
+            process_prime[num_of_processes].count+=process_prime[i].count;
         }
-        printf("%d\n", total_prime.count);
+        printf("KQ = %d\n", process_prime[num_of_processes].count);
+        shm_unlink(name);
         exit(EXIT_SUCCESS);
     }
 }
