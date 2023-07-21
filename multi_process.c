@@ -10,8 +10,6 @@
 #include <sys/stat.h>
 #include <sys/mman.h>
 
-#define SIZE 4096
-
 struct Prime {
     int bg;
     int end;
