@@ -86,17 +86,14 @@ int main(int argc, char** argv) {
                         process_prime[i].end = process_prime[total_prime].bg + (i + 1) * interval - 1;
                     }      
                     count_prime((void*)&process_prime[i]);
+                    process_prime[total_prime].count+=process_prime[i].count;
                     exit(EXIT_SUCCESS);
                 default:
+                    wait(NULL);
                     break;
             }
         }
-        for (int i = 0; i < success_fork; i++)
-        {
-            wait(NULL);
-            process_prime[num_of_processes].count+=process_prime[i].count;
-        }
-        printf("KQ = %d\n", process_prime[num_of_processes].count);
+        printf("KQ = %d\n", process_prime[total_prime].count);
         shm_unlink(name);
         exit(EXIT_SUCCESS);
     }
