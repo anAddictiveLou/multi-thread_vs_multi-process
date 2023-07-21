@@ -9,12 +9,19 @@
 #include <sys/shm.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
+#include <signal.h>
 
 struct Prime {
     int bg;
     int end;
     int count;
 };
+int catch;
+
+void sigchld_handler() {
+    wait(NULL);
+    catch++;
+}
 
 bool isPrime(int num) {
     if (num <= 1)
@@ -49,6 +56,9 @@ int main(int argc, char** argv) {
     }
     else
     {
+        /* set up SIGCHLD handler*/
+        signal(SIGCHLD, sigchld_handler);
+
         /* Set up shared mem */
         char* name = "shared mem";
         int shm_fd = shm_open(name, O_CREAT | O_RDWR, 0666);
@@ -89,10 +99,10 @@ int main(int argc, char** argv) {
                     process_prime[total_prime].count+=process_prime[i].count;
                     exit(EXIT_SUCCESS);
                 default:
-                    wait(NULL);
                     break;
             }
         }
+        while (catch < num_of_processes);        
         printf("KQ = %d\n", process_prime[total_prime].count);
         shm_unlink(name);
         exit(EXIT_SUCCESS);
